@@ -17,3 +17,18 @@ TODO:
 - Update entities in realtime (force device state update)
 - Handle Oauth token refresh
 - Reconnect websocket when connection is dropped
+
+
+## Debugging
+If you experience unexpected behavior please create an github issue.
+Post some debug log info or share this privately.
+You can obtain this by adding these lines to your config and restart homeassistant.
+
+
+```
+logger:
+  default: info
+  logs:
+      custom_components.brandweerrooster: debug
+      fireservicerota: debug
+```
