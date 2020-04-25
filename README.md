@@ -4,6 +4,9 @@
 This is a Custom Component for Home-Assistant (https://home-assistant.io) that tracks incidents from BrandweerRooster.nl
 
 ## Disclamer
+
+This is expermimental software **in beta stage**, please read below License before installing it.
+
 <pre>
 MIT License
 
@@ -47,8 +50,15 @@ TODO:
 
 This is my experimental config for BWR related sensors, switches etc.
 
-Install browser_mod (for example via HACS)
-Set device alias to your media player id.
+If you want to have browser audio player, and screen control you need to nstall browser_mod integration (for example via HACS)
+Set the device alias to your media player id.
+You also need these plugin for lovelace (HACS is again your friend)
+- 'custom:layout-card'
+- 'custom:bignumber-card'
+- 'custom:vertical-stack-in-card'
+- 'custom:home-feed-card'
+
+If you have a better layout without the custom plugin, please let me know.
 
 ```
 
@@ -183,6 +193,13 @@ Below is the result, audio player via browser_mod player, screen gets enabled wh
 I have muted the announcements outside 23:00-6:30 using a automation condition, if you have duty, that's something to remove.
 
 
+## Screenshots
+
+![alt text](https://github.com/cyberjunky/home-assistant-brandweerrooster/blob/master/screenshots/bwr-nesthub-dash.png?raw=true "Screenshot BrandweerRooster Dashboard")
+
+My Nest Hub 'at work'
+
+![alt text](https://github.com/cyberjunky/home-assistant-brandweerrooster/blob/master/screenshots/nesthub.jpg?raw=true "Photo Nest Hub at work")
 
 
 ## Debugging
