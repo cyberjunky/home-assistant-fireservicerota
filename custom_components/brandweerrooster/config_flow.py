@@ -3,9 +3,9 @@ from fireservicerota import FireServiceRotaOAuth, FireServiceRotaOauthError
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_TOKEN
+from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_TOKEN, CONF_URL
 
-from .const import DOMAIN , OAUTH2_TOKENURL # pylint: disable=unused-import
+from .const import DOMAIN , OAUTH2_TOKENURL, URL_LIST # pylint: disable=unused-import
 
 
 class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -17,6 +17,7 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_USERNAME): str,
                 vol.Required(CONF_PASSWORD): str,
+                vol.Required(CONF_URL, default="www.brandweerrooster.nl"): vol.In(URL_LIST),
             }
         )
 
@@ -38,7 +39,7 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         try:
             oauth = FireServiceRotaOAuth(
-                OAUTH2_TOKENURL, "", user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
+                OAUTH2_TOKENURL.format(user_input[CONF_URL]), "", user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
             )
             token_info = oauth.get_access_token()
         except FireServiceRotaOauthError:
@@ -50,6 +51,7 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 "auth_implementation": DOMAIN,
                 CONF_USERNAME: user_input[CONF_USERNAME],
                 CONF_PASSWORD: user_input[CONF_PASSWORD],
+                CONF_URL: user_input[CONF_URL],
                 CONF_TOKEN: token_info
             },
         )

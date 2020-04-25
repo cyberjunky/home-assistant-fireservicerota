@@ -7,7 +7,7 @@ import json
 from fireservicerota import FireServiceRotaOAuth, FireServiceRotaOauthError, FireServiceRotaIncidentsListener
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID, CONF_USERNAME, CONF_PASSWORD
+from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_URL
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
@@ -24,7 +24,7 @@ async def async_setup_entry(
 
     try:
         oauth = FireServiceRotaOAuth(
-            OAUTH2_TOKENURL,
+            OAUTH2_TOKENURL.format(entry.data[CONF_URL]),
             "",
             entry.data[CONF_USERNAME],
             entry.data[CONF_PASSWORD],
@@ -36,8 +36,9 @@ async def async_setup_entry(
 
     if not token_info:
         _LOGGER.error("Failed to get oauth access token")
+        return False
 
-    wsurl = WSS_BWRURL + token_info['access_token']
+    wsurl = WSS_BWRURL.format(entry.data[CONF_URL], token_info['access_token'])
 
     try:
         incidents_data = IncidentsDataProvider(hass, wsurl)

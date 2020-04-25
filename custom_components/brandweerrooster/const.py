@@ -2,8 +2,9 @@
 
 DOMAIN = "brandweerrooster"
 
-OAUTH2_TOKENURL = "https://www.brandweerrooster.nl/oauth/token"
-WSS_BWRURL = "wss://www.brandweerrooster.nl/cable?access_token="
+OAUTH2_TOKENURL = "https://{0}/oauth/token"
+WSS_BWRURL = "wss://{0}/cable?access_token={1}"
+URL_LIST = ["www.brandweerrooster.nl", "www.fireservicerota.co.uk"]
 
 ATTRIBUTION = "Data provided by brandweerrooster.nl"
 

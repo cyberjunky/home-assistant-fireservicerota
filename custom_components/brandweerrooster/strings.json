@@ -5,7 +5,7 @@
         "step": {
             "user": {
                 "title": "BrandweerRooster",
-                "data": { "username": "Username", "password": "Password" }
+                "data": { "username": "Username", "password": "Password", "url": "Selecteer website" }
             }
         },
         "error": {
