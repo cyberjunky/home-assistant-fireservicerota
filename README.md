@@ -197,6 +197,10 @@ I have muted the announcements outside 23:00-6:30 using a automation condition, 
 
 ![alt text](https://github.com/cyberjunky/home-assistant-brandweerrooster/blob/master/screenshots/bwr-nesthub-dash.png?raw=true "Screenshot BrandweerRooster Dashboard")
 
+My Nest Hub 'at work'
+
+![alt text](https://github.com/cyberjunky/home-assistant-brandweerrooster/blob/master/screenshots/nesthub.jpg?raw=true "Photo Nest Hub at work")
+
 
 ## Debugging
 If you experience unexpected behavior please create an GitHub issue.
