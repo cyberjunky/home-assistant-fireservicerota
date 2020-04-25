@@ -50,8 +50,15 @@ TODO:
 
 This is my experimental config for BWR related sensors, switches etc.
 
-Install browser_mod (for example via HACS)
-Set device alias to your media player id.
+If you want to have browser audio player, and screen control you need to nstall browser_mod integration (for example via HACS)
+Set the device alias to your media player id.
+You also need these plugin for lovelace (HACS is again your friend)
+- 'custom:layout-card'
+- 'custom:bignumber-card'
+- 'custom:vertical-stack-in-card'
+- 'custom:home-feed-card'
+
+If you have a better layout without the custom plugin, please let me know.
 
 ```
 
