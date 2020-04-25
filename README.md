@@ -1,7 +1,7 @@
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/cyberjunkynl/)
 
-# BrandweerRooster / FireServiceRota Sensor Component
-This is a Custom Component for Home-Assistant (https://home-assistant.io) that tracks incidents from BrandweerRooster.nl or FireServiceRota.co.uk
+# FireServiceRota / BrandweerRooster Sensor Component
+This is a Custom Component for Home-Assistant (https://home-assistant.io) that tracks incidents from BrandweerRooster.nl and FireServiceRota.co.uk
 
 ## Disclamer
 
@@ -33,38 +33,34 @@ SOFTWARE.
 
 ## Installation
 
-- Copy directory `custom_components/brandweerrooster` to your `<config dir>/custom_components` directory.
+- Copy directory `custom_components/fireservicerota` to your `<config dir>/custom_components` directory.
 - Restart Home-Assistant.
-- Goto Configuration -> Integrations, search for and add BrandweerRooster.
+- Goto Configuration -> Integrations, search for FireServiceRota and complete account data.
 
-NOTE: You need for account for BrandweerRooster.nl or FireServiceRota.co.uk which is an availability, scheduling and dispatching system for firefighters.
+NOTE: You need for account for BrandweerRooster.nl or FireServiceRota.co.uk which are availability, scheduling and dispatching systems for firefighters.
 
 NOTE: This is still work in progress, some issues and features need to be implemented.
 
-TODO:
-- Update entities in realtime (force device state update)
-- Handle Oauth token refresh
-- Reconnect websocket when connection is dropped
+## FireServiceRota / BrandweerRooster Dashboard
 
-## BrandweerRooster / FireServiceRota Dashboard
+This is my experimental config for related sensors, switches etc.
 
-This is my experimental config for BWR related sensors, switches etc.
+If you want to have your browser to function as audio player, and have screen control you need to install the 'browser_mod' integration (via HACS)
 
-If you want to have browser audio player, and screen control you need to nstall browser_mod integration (for example via HACS)
-Set the device alias to your media player id.
-You also need these plugin for lovelace (HACS is again your friend)
+Set the device alias below to match your media player id.
+
+You also need to install the following plugin for lovelace (HACS is again your friend)
 - 'custom:layout-card'
 - 'custom:bignumber-card'
 - 'custom:vertical-stack-in-card'
 - 'custom:home-feed-card'
 
-If you have a better layout without the custom plugin, please let me know.
+If you have a better layout without/or less custom plugins, please let me know.
 
 ```
-
 browser_mod:
   devices:
-    3184e47f_bac9b576:
+    3184e47f_bac9b576:  # <--- change this
       name: bwr-nesthub
 
 sensor:
@@ -76,13 +72,13 @@ sensor:
 
 input_boolean:
   bwr_tts:
-    name: Gesproken Tekst
+    name: Text to Speech
     icon: mdi:text-to-speech
 
 homeassistant:
   customize:
     light.bwr_nesthub:
-      friendly_name: 'Scherm Aan/Uit'
+      friendly_name: 'Display On/Off'
 
 automation:
   - alias: Play Incident Speech
@@ -185,12 +181,12 @@ cards:
 ```
 
 
-If you want to cast it to a Nest Hub you need a Nabu Casa subscription, or use Catt to Cast.
+If you want to cast it to a Nest Hub or other ChromeCast capable device, you need a Nabu Casa subscription or use Catt to Cast.
 Home Assistant Cast can be a bit buggy, custom cards or map may stop working sometimes.
 
-Below is the result, audio player via browser_mod player, screen gets enabled when incident arrives, and goes dark after 1 minute. You can disable TTS, or screen display.
+Below is the result of above code, an audio player via browser_mod player, screen gets enabled when an incident arrives, and goes dark after 2 minutes. You can toggle TTS and screen display on and off.
 
-I have muted the announcements outside 23:00-6:30 using a automation condition, if you have duty, that's something to remove.
+I have muted the announcements outside 23:00-6:30h using a automation condition, if you have duty, that's something to remove.
 
 
 ## Screenshots
@@ -205,13 +201,13 @@ My Nest Hub 'at work'
 ## Debugging
 If you experience unexpected behavior please create an GitHub issue.
 Post some debug log info or share this privately.
-You can obtain this by adding these lines to your config and restart homeassistant.
+You can obtain this information by adding the following lines to your config and restart homeassistant.
 
 
 ```
 logger:
   default: info
   logs:
-      custom_components.brandweerrooster: debug
+      custom_components.fireservicerota: debug
       fireservicerota: debug
 ```
