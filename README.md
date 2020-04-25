@@ -4,6 +4,9 @@
 This is a Custom Component for Home-Assistant (https://home-assistant.io) that tracks incidents from BrandweerRooster.nl
 
 ## Disclamer
+
+This is expermimental software **in beta stage**, please read below License before installing it.
+
 <pre>
 MIT License
 
@@ -183,6 +186,9 @@ Below is the result, audio player via browser_mod player, screen gets enabled wh
 I have muted the announcements outside 23:00-6:30 using a automation condition, if you have duty, that's something to remove.
 
 
+## Screenshots
+
+![alt text](https://github.com/cyberjunky/home-assistant-brandweerrooster/blob/master/screenshots/bwr-nesthub-dash.png?raw=true "Screenshot BrandweerRooster Dashboard")
 
 
 ## Debugging
