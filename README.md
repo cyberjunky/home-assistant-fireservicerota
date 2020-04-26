@@ -37,7 +37,7 @@ SOFTWARE.
 - Restart Home-Assistant.
 - Goto Configuration -> Integrations, search for FireServiceRota and complete account data.
 
-NOTE: You need for account for BrandweerRooster.nl or FireServiceRota.co.uk which are availability, scheduling and dispatching systems for firefighters.
+NOTE: You need to have an account for BrandweerRooster.nl or FireServiceRota.co.uk which are availability, scheduling and dispatching systems for firefighters.
 
 NOTE: This is still work in progress, some issues and features need to be implemented.
 
@@ -186,7 +186,7 @@ Home Assistant Cast can be a bit buggy, custom cards or map may stop working som
 
 Below is the result of above code, an audio player via browser_mod player, screen gets enabled when an incident arrives, and goes dark after 2 minutes. You can toggle TTS and screen display on and off.
 
-I have muted the announcements outside 23:00-6:30h using a automation condition, if you have duty, that's something to remove.
+I have muted the announcements outside 23:00-6:30h using a automation condition, if you are on duty, that's something to remove.
 
 
 ## Screenshots
