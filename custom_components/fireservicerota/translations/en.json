@@ -1,0 +1,21 @@
+{
+    "config": {
+        "title": "FireServiceRota",
+        "description": "Enter your login credentials",
+        "step": {
+            "user": {
+                "title": "FireServiceRota",
+                "data": { "username": "Username", "password": "Password", "url": "Website" }
+            }
+        },
+        "error": {
+            "invalid_credentials": "Invalid credentials."
+        },
+        "abort": {
+            "already_configured": "This account is already configured."
+        },
+        "create_entry": {
+            "default": "Successfully authenticated!"
+        }
+    }
+}
