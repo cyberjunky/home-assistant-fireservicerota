@@ -209,5 +209,5 @@ logger:
   default: info
   logs:
       custom_components.fireservicerota: debug
-      fireservicerota: debug
+      pyfireservicerota: debug
 ```
