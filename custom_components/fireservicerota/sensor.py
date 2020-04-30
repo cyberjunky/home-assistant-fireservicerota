@@ -29,7 +29,10 @@ async def async_setup_entry(
             "",
         )
 
-        token_info = oauth.refresh_access_token(entry.data[CONF_TOKEN])
+        # token_info = oauth.refresh_access_token(entry.data[CONF_TOKEN])
+        token_info = await hass.async_add_executor_job(
+            oauth.refresh_access_token, entry.data[CONF_TOKEN]
+        )
     except FireServiceRotaOauthError:
         token_info = None
 
@@ -39,7 +42,7 @@ async def async_setup_entry(
 
     if token_info != entry.data[CONF_TOKEN]:
         _LOGGER.debug("Access token has been refreshed")
-        # TODO: store token_info in config
+        # TODO: store new token_info in config
     else:
         _LOGGER.debug("Access token is still valid")
 

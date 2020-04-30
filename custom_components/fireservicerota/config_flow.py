@@ -41,7 +41,8 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             oauth = FireServiceRotaOAuth(
                 OAUTH2_TOKENURL.format(user_input[CONF_URL]), "", user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
             )
-            token_info = oauth.get_access_token()
+            token_info =  await self.hass.async_add_executor_job(oauth.get_access_token)
+            # token_info = oauth.get_access_token()
         except FireServiceRotaOauthError:
             return await self._show_form(errors={"base": "invalid_credentials"})
 
