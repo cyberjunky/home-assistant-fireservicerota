@@ -22,14 +22,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up FireServiceRota sensor based on a config entry."""
     try:
-        oauth = FireServiceRotaOAuth(
+        oauth = await hass.async_add_executor_job(FireServiceRotaOAuth,
             OAUTH2_TOKENURL.format(entry.data[CONF_URL]),
             "",
             "",
-            "",
+            ""
         )
 
-        # token_info = oauth.refresh_access_token(entry.data[CONF_TOKEN])
         token_info = await hass.async_add_executor_job(
             oauth.refresh_access_token, entry.data[CONF_TOKEN]
         )
