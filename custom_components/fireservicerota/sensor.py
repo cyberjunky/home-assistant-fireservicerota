@@ -7,7 +7,7 @@ import json
 from pyfireservicerota import FireServiceRotaOAuth, FireServiceRotaOauthError, FireServiceRotaIncidentsListener
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_URL
+from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_URL, CONF_TOKEN
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
@@ -21,22 +21,27 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota sensor based on a config entry."""
-
     try:
         oauth = FireServiceRotaOAuth(
             OAUTH2_TOKENURL.format(entry.data[CONF_URL]),
             "",
-            entry.data[CONF_USERNAME],
-            entry.data[CONF_PASSWORD],
+            "",
+            "",
         )
 
-        token_info = oauth.get_access_token()
+        token_info = oauth.refresh_access_token(entry.data[CONF_TOKEN])
     except FireServiceRotaOauthError:
         token_info = None
 
     if not token_info:
         _LOGGER.error("Failed to get an oauth access token")
         return False
+
+    if token_info != entry.data[CONF_TOKEN]:
+        _LOGGER.debug("Access token has been refreshed")
+        # TODO: store token_info in config
+    else:
+        _LOGGER.debug("Access token is still valid")
 
     wsurl = WSS_BWRURL.format(entry.data[CONF_URL], token_info['access_token'])
 
