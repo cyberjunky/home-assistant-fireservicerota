@@ -1,49 +1,24 @@
 """Platform for FireServiceRota integration."""
-import logging
 from typing import Any, Dict
 import threading
 import json
 
-from pyfireservicerota import FireServiceRotaOAuth, FireServiceRotaOauthError, FireServiceRotaIncidentsListener
+from pyfireservicerota import FireServiceRotaIncidents
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_URL, CONF_TOKEN
+from homeassistant.const import ATTR_ATTRIBUTION, CONF_URL, CONF_TOKEN
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
 
-from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, OAUTH2_TOKENURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS
-
-_LOGGER = logging.getLogger(__name__)
-
+from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS, _LOGGER
 
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota sensor based on a config entry."""
-    try:
-        oauth = await hass.async_add_executor_job(FireServiceRotaOAuth,
-            OAUTH2_TOKENURL.format(entry.data[CONF_URL]),
-            "",
-            "",
-            ""
-        )
 
-        token_info = await hass.async_add_executor_job(
-            oauth.refresh_access_token, entry.data[CONF_TOKEN]
-        )
-    except FireServiceRotaOauthError:
-        token_info = None
-
-    if not token_info:
-        _LOGGER.error("Failed to get an oauth access token")
-        return False
-
-    if token_info != entry.data[CONF_TOKEN]:
-        _LOGGER.debug("Access token has been refreshed")
-        # TODO: store new token_info in config
-    else:
-        _LOGGER.debug("Access token is still valid")
+    token_info = entry.data[CONF_TOKEN]
 
     wsurl = WSS_BWRURL.format(entry.data[CONF_URL], token_info['access_token'])
 
@@ -53,7 +28,6 @@ async def async_setup_entry(
         _LOGGER.error("Error while starting incidents listener")
         return False
 
-    fireservice_data = entry.entry_id
     unique_id = entry.unique_id
 
     entities = []
@@ -117,7 +91,7 @@ class IncidentsDataProvider:
         """Spawn a new Listener and link it to self.on_incident."""
 
         _LOGGER.debug("Starting incidents listener forever")
-        self.listener = FireServiceRotaIncidentsListener(url=self._wsurl, on_incident=self.on_incident)
+        self.listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident)
 
         while True:
             try:

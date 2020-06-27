@@ -1,15 +1,23 @@
 """Constants for the FireServiceRota integration."""
+import logging
 
 DOMAIN = "fireservicerota"
-
-OAUTH2_TOKENURL = "https://{0}/oauth/token"
-WSS_BWRURL = "wss://{0}/cable?access_token={1}"
-URL_LIST = ["www.brandweerrooster.nl", "www.fireservicerota.co.uk"]
-
-ATTRIBUTION = "Data provided by FireServiceRota"
+PLATFORMS = ["sensor", "binary_sensor", "switch"]
+_LOGGER = logging.getLogger(__name__)
 
 SENSOR_ENTITY_LIST = {
     "incidents": ["Incidents", "", "mdi:fire-truck", None, True],
 }
 
+BINARY_SENSOR_ENTITY_LIST = {
+    "duty": ["Duty", "", "mdi:calendar", None, True],
+}
+
+SWITCH_ENTITY_LIST = {
+    "incident_response": ["Incident Response", "", "mdi:forum", None, True],
+}
+
+URL_LIST = ["www.brandweerrooster.nl", "www.fireservicerota.co.uk"]
+ATTRIBUTION = "Data provided by FireServiceRota"
+WSS_BWRURL = "wss://{0}/cable?access_token={1}"
 SIGNAL_UPDATE_INCIDENTS = "fsr_incidents_update"

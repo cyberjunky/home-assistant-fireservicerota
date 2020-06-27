@@ -1,11 +1,11 @@
 """Config flow for FireServiceRota."""
-from pyfireservicerota import FireServiceRotaOAuth, FireServiceRotaOauthError
+from pyfireservicerota import FireServiceRota, InvalidAuthError
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_TOKEN, CONF_URL
 
-from .const import DOMAIN , OAUTH2_TOKENURL, URL_LIST # pylint: disable=unused-import
+from .const import DOMAIN, URL_LIST # pylint: disable=unused-import
 
 
 class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -13,6 +13,7 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         """Initialize the config flow."""
+
         self.data_schema = vol.Schema(
             {
                 vol.Required(CONF_USERNAME): str,
@@ -38,12 +39,12 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         try:
-            oauth = FireServiceRotaOAuth(
-                OAUTH2_TOKENURL.format(user_input[CONF_URL]), "", user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
+            api = FireServiceRota(
+                base_url=f"https://{user_input[CONF_URL]}", username=user_input[CONF_USERNAME], password=user_input[CONF_PASSWORD]
             )
-            token_info =  await self.hass.async_add_executor_job(oauth.get_access_token)
-            # token_info = oauth.get_access_token()
-        except FireServiceRotaOauthError:
+            token_info =  await self.hass.async_add_executor_job(api.request_tokens)
+
+        except InvalidAuthError:
             return await self._show_form(errors={"base": "invalid_credentials"})
 
         return self.async_create_entry(
