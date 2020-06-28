@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/cyberjunky/home-assistant-fireservicerota",
   "requirements": [
-    "pyfireservicerota==0.0.20"
+    "pyfireservicerota==0.0.21"
   ],
   "dependencies": [],
   "codeowners": [
