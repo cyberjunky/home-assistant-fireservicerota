@@ -3,14 +3,14 @@ import asyncio
 import voluptuous as vol
 from datetime import timedelta
 
-from pyfireservicerota import FireServiceRota, ExpiredTokenError, InvalidTokenError
+from pyfireservicerota import FireServiceRota, ExpiredTokenError, InvalidTokenError, InvalidAuthError
 from homeassistant.const import CONF_URL, CONF_TOKEN
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, PLATFORMS, _LOGGER
+from .const import DOMAIN, PLATFORMS, _LOGGER, NOTIFICATION_AUTH_TITLE, NOTIFICATION_AUTH_ID
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
@@ -63,7 +63,6 @@ class FireServiceRotaData:
     async def update(self):
         """Get the latest data from fireservicerota."""
         try:
-            # TODO await self._hass.async_add_executor_job(self.fsr.update)
             self.data = await self._hass.async_add_executor_job(self.fsr.update)
             _LOGGER.debug("Updating fireservicerota data")
         except ExpiredTokenError:
@@ -73,20 +72,27 @@ class FireServiceRotaData:
     async def refresh(self) -> bool:
         """Refresh tokens and update config entry."""
         _LOGGER.debug("Refreshing tokens and updating config entry")
-        token_info = await self._hass.async_add_executor_job(self.fsr.refresh_tokens)
-        # except notify if refresh token is invalid
-        
+        try:
+            token_info = await self._hass.async_add_executor_job(self.fsr.refresh_tokens)
+        except InvalidAuthError: 
+            _LOGGER.error("Error occurred while refreshing authentication tokens")
+            self._hass.components.persistent_notification.async_create(
+                f"Cannot refresh authentication tokens, you need to re-add this integration and login to generate new ones.",
+                title=NOTIFICATION_AUTH_TITLE,
+                notification_id=NOTIFICATION_AUTH_ID,
+            )
+            return False
+
         if token_info:
             self._hass.config_entries.async_update_entry(
                 self._entry,
-                data={CONF_TOKEN: token_info}
+                data={
+                    "auth_implementation": DOMAIN,
+                    CONF_URL: self._url,
+                    CONF_TOKEN: token_info
+                }
             )
-
-            # TODO: restart websocket
             return True
-
-        _LOGGER.error("Error refreshing tokens")
-        return False
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
@@ -97,7 +103,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     tasks = []
     for platform in PLATFORMS:
         tasks.append(
-            hass.config_entries.async_forward_entry_unload(config_entry, platform)
+            hass.config_entries.async_forward_entry_unload(entry, platform)
         )
 
     return all(await asyncio.gather(*tasks))

@@ -19,7 +19,6 @@ async def async_setup_entry(
     """Set up FireServiceRota sensor based on a config entry."""
 
     token_info = entry.data[CONF_TOKEN]
-
     wsurl = WSS_BWRURL.format(entry.data[CONF_URL], token_info['access_token'])
 
     try:

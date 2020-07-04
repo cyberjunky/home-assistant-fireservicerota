@@ -50,6 +50,46 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
+class DutySwitchDataProvider:
+    """Open a websocket connection to FireServiceRota to get incidents data."""
+    def __init__(self, hass, wsurl):
+
+        self._wsurl = wsurl
+        self._hass = hass
+
+        self._data = None
+        self.listener = None
+        self.thread = threading.Thread(target=self.incidents_listener)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def on_incident(self, data):
+        """Update the current data."""
+        _LOGGER.debug("Got data from listener: %s", data)
+        self._data = data
+
+        """Signal hass to update sensor value."""
+        async_dispatcher_send(self._hass, SIGNAL_UPDATE_INCIDENTS)
+
+    @property
+    def data(self):
+        """Return the current data."""
+        return self._data
+
+    def incidents_listener(self):
+        """Spawn a new Listener and link it to self.on_incident."""
+
+        _LOGGER.debug("Starting incidents listener forever")
+        self.listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident)
+
+        while True:
+            try:
+                self.listener.run_forever()
+            except:
+                pass
+
+
+
 class FSRBinarySensor(BinarySensorEntity):
     """Representation of an FireServiceRota sensor."""
     def __init__(
