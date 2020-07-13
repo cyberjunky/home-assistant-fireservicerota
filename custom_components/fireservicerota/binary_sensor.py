@@ -1,5 +1,6 @@
 """Platform for FireServiceRota integration."""
 from typing import Any, Dict
+import logging
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
@@ -7,9 +8,11 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
-from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
 
-from .const import _LOGGER, DOMAIN, BINARY_SENSOR_ENTITY_LIST, ATTRIBUTION
+from .const import DOMAIN, BINARY_SENSOR_ENTITY_LIST, ATTRIBUTION
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
@@ -48,46 +51,6 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities, True)
-
-
-class DutySwitchDataProvider:
-    """Open a websocket connection to FireServiceRota to get incidents data."""
-    def __init__(self, hass, wsurl):
-
-        self._wsurl = wsurl
-        self._hass = hass
-
-        self._data = None
-        self.listener = None
-        self.thread = threading.Thread(target=self.incidents_listener)
-        self.thread.daemon = True
-        self.thread.start()
-
-    def on_incident(self, data):
-        """Update the current data."""
-        _LOGGER.debug("Got data from listener: %s", data)
-        self._data = data
-
-        """Signal hass to update sensor value."""
-        async_dispatcher_send(self._hass, SIGNAL_UPDATE_INCIDENTS)
-
-    @property
-    def data(self):
-        """Return the current data."""
-        return self._data
-
-    def incidents_listener(self):
-        """Spawn a new Listener and link it to self.on_incident."""
-
-        _LOGGER.debug("Starting incidents listener forever")
-        self.listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident)
-
-        while True:
-            try:
-                self.listener.run_forever()
-            except:
-                pass
-
 
 
 class FSRBinarySensor(BinarySensorEntity):
@@ -187,18 +150,18 @@ class FSRBinarySensor(BinarySensorEntity):
         if not self.enabled:
             return
 
-        await self._data.update()
-        _LOGGER.debug("DATA: %s", self._data.data)
+        await self._data.async_update()
+        _LOGGER.debug(self._data.availability_data)
         try:
-            if self._data.data:
-                state =  self._data.data['available']
+            if self._data.availability_data:
+                state =  self._data.availability_data['available']
                 if state:
-                    self._state = 'on'
+                    self._state = STATE_ON
                 else:
-                    self._state = 'off'
-                self._state_attributes = self._data.data
+                    self._state = STATE_OFF
+                self._state_attributes = self._data.availability_data
             else:
-                self._state = 'off'
+                self._state = STATE_OFF
         except (KeyError, TypeError) as err:
             _LOGGER.debug(
                 "Error while updating %s device state: %s", self._name, err

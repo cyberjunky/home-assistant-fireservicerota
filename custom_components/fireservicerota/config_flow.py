@@ -51,7 +51,6 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             title=user_input[CONF_USERNAME],
             data={
                 "auth_implementation": DOMAIN,
-                "implementation": DOMAIN,
                 CONF_URL: user_input[CONF_URL],
                 CONF_TOKEN: token_info
             },

@@ -2,6 +2,7 @@
 import asyncio
 import voluptuous as vol
 from datetime import timedelta
+import logging
 
 from pyfireservicerota import FireServiceRota, ExpiredTokenError, InvalidTokenError, InvalidAuthError
 from homeassistant.const import CONF_URL, CONF_TOKEN
@@ -10,10 +11,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, PLATFORMS, _LOGGER, NOTIFICATION_AUTH_TITLE, NOTIFICATION_AUTH_ID
+from .const import DOMAIN, PLATFORMS, NOTIFICATION_AUTH_TITLE, NOTIFICATION_AUTH_ID
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the FireServiceRota component."""
@@ -27,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up FireServiceRota from a config entry."""
 
     data = FireServiceRotaData(hass, entry)
-    await data.update()
+    await data.async_update()
 
     hass.data[DOMAIN] = data
 
@@ -56,34 +58,65 @@ class FireServiceRotaData:
             base_url = f"https://{self._url}",
             token_info = self._tokens
         )
-        self.data = None
+        self.availability_data = None
+        self.incident_data = None
+        self.incident_id = None
+        self.response_data = None
 
+
+    def set_incident_data(self, data):
+        self.incident_data = data
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    async def update(self):
-        """Get the latest data from fireservicerota."""
+    async def async_update(self):
+        """Get the latest availability data."""
         try:
-            self.data = await self._hass.async_add_executor_job(self.fsr.update)
-            _LOGGER.debug("Updating fireservicerota data")
+            self.availability_data = await self._hass.async_add_executor_job(self.fsr.get_availability)
+            _LOGGER.debug("Updating availability data")
         except ExpiredTokenError:
             _LOGGER.debug("Refreshing expired tokens")
-            await self.refresh()
+            await self.async_refresh()
 
-    async def refresh(self) -> bool:
+
+    async def async_response_update(self):
+        """Get the latest response data."""
+        if self.incident_data:
+            self.incident_id = self.incident_data.get('id')
+            _LOGGER.debug("Incident id: %s", self.incident_id)
+            try:
+                self.response_data = await self._hass.async_add_executor_job(self.fsr.get_incident_response, self.incident_id)
+                _LOGGER.debug("Updating incident response data")
+            except ExpiredTokenError:
+                _LOGGER.debug("Refreshing expired tokens")
+                await self.async_refresh()
+
+
+    async def async_set_response(self, id, value):
+        """Set response status."""
+        try:
+            await self._hass.async_add_executor_job(self.fsr.set_incident_response, id, value)
+            _LOGGER.debug("Setting incident response status")
+        except ExpiredTokenError:
+            _LOGGER.debug("Refreshing expired tokens")
+            await self.async_refresh()
+
+
+    async def async_refresh(self) -> bool:
         """Refresh tokens and update config entry."""
-        _LOGGER.debug("Refreshing tokens and updating config entry")
+        _LOGGER.debug("Refreshing authentication tokens")
         try:
             token_info = await self._hass.async_add_executor_job(self.fsr.refresh_tokens)
         except InvalidAuthError: 
             _LOGGER.error("Error occurred while refreshing authentication tokens")
             self._hass.components.persistent_notification.async_create(
-                f"Cannot refresh authentication tokens, you need to re-add this integration and login to generate new ones.",
+                f"Cannot refresh tokens, you need to re-add this integration and login to generate new ones.",
                 title=NOTIFICATION_AUTH_TITLE,
                 notification_id=NOTIFICATION_AUTH_ID,
             )
             return False
 
         if token_info:
+            _LOGGER.debug("Saving new tokens to config entry")
             self._hass.config_entries.async_update_entry(
                 self._entry,
                 data={
@@ -97,7 +130,6 @@ class FireServiceRotaData:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
-
     hass.data.pop(DOMAIN)
 
     tasks = []

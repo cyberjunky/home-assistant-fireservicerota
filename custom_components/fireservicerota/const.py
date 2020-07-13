@@ -1,9 +1,7 @@
 """Constants for the FireServiceRota integration."""
-import logging
 
 DOMAIN = "fireservicerota"
 PLATFORMS = ["sensor", "binary_sensor", "switch"]
-_LOGGER = logging.getLogger(__name__)
 
 SENSOR_ENTITY_LIST = {
     "incidents": ["Incidents", "", "mdi:fire-truck", None, True],

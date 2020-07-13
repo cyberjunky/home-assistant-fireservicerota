@@ -2,6 +2,7 @@
 from typing import Any, Dict
 import threading
 import json
+import logging
 
 from pyfireservicerota import FireServiceRotaIncidents
 
@@ -11,18 +12,16 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
 
-from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS, _LOGGER
+from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota sensor based on a config entry."""
-
-    token_info = entry.data[CONF_TOKEN]
-    wsurl = WSS_BWRURL.format(entry.data[CONF_URL], token_info['access_token'])
-
     try:
-        incidents_data = IncidentsDataProvider(hass, wsurl)
+        incidents_data = IncidentsDataProvider(hass, entry)
     except Exception:
         _LOGGER.error("Error while starting incidents listener")
         return False
@@ -62,39 +61,55 @@ async def async_setup_entry(
 
 class IncidentsDataProvider:
     """Open a websocket connection to FireServiceRota to get incidents data."""
-    def __init__(self, hass, wsurl):
+    def __init__(self, hass, entry):
 
-        self._wsurl = wsurl
         self._hass = hass
+        self._entry = entry
 
+        self._token_info = self._entry.data[CONF_TOKEN]
+        self._wsurl = WSS_BWRURL.format(self._entry.data[CONF_URL], self._token_info['access_token'])
         self._data = None
-        self.listener = None
-        self.thread = threading.Thread(target=self.incidents_listener)
-        self.thread.daemon = True
-        self.thread.start()
+
+        self._listener = None
+        self._thread = threading.Thread(target=self.incidents_listener)
+        self._thread.daemon = True
+        self._thread.start()
+
 
     def on_incident(self, data):
         """Update the current data."""
         _LOGGER.debug("Got data from listener: %s", data)
         self._data = data
+        self._hass[DOMAIN].set_incident_data(data)
 
         """Signal hass to update sensor value."""
         async_dispatcher_send(self._hass, SIGNAL_UPDATE_INCIDENTS)
+
 
     @property
     def data(self):
         """Return the current data."""
         return self._data
 
+
+    def on_error(self, error):
+        _LOGGER.debug("Websocket error: %s", error)
+
+
+    def on_close(self):
+        _LOGGER.debug("Websocket closed")
+        return
+
+
     def incidents_listener(self):
         """Spawn a new Listener and link it to self.on_incident."""
 
-        _LOGGER.debug("Starting incidents listener forever")
-        self.listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident)
-
         while True:
             try:
-                self.listener.run_forever()
+                _LOGGER.debug("Starting incidents listener forever")
+                self._listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident, 
+                        on_error=self.on_error, on_close=self.on_close)
+                self._listener.run_forever()
             except:
                 pass
 
@@ -125,30 +140,36 @@ class IncidentsSensor(Entity):
         self._state = None
         self._state_attributes = {}
 
+
     @property
     def name(self):
         """Return the name of the sensor."""
         return self._name
+
 
     @property
     def icon(self):
         """Return the icon to use in the frontend."""
         return self._icon
 
+
     @property
     def state(self):
         """Return the state of the sensor."""
         return self._state
+
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this sensor."""
         return f"{self._unique_id}_{self._type}"
 
+
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return self._unit
+
 
     @property
     def device_state_attributes(self):
@@ -172,6 +193,7 @@ class IncidentsSensor(Entity):
             attr[ATTR_ATTRIBUTION] = ATTRIBUTION
             return attr
 
+
     @property
     def device_info(self) -> Dict[str, Any]:
         """Return device information."""
@@ -181,20 +203,24 @@ class IncidentsSensor(Entity):
             "manufacturer": "FireServiceRota",
         }
 
+
     @property
     def entity_registry_enabled_default(self) -> bool:
         """Return if the entity should be enabled when first added to the entity registry."""
         return self._enabled_default
+
 
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._available
 
+
     @property
     def device_class(self):
         """Return the device class of the sensor."""
         return self._device_class
+
 
     async def async_added_to_hass(self):
         """Register update callback."""
@@ -204,14 +230,17 @@ class IncidentsSensor(Entity):
             )
         )
 
+
     @property
     def should_poll(self) -> bool:
         """No polling needed."""
         return False
 
+
     async def async_on_demand_update(self):
         """Update state."""
         self.async_schedule_update_ha_state(True)
+
 
     async def async_update(self):
         """Update using FireServiceRota data."""
