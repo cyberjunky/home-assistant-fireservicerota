@@ -20,6 +20,7 @@ from .const import DOMAIN, SWITCH_ENTITY_LIST, ATTRIBUTION, SIGNAL_UPDATE_INCIDE
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
@@ -86,36 +87,30 @@ class FSRSwitch(SwitchEntity):
         self._state = None
         self._state_attributes = {}
 
-
     @property
     def name(self):
         """Return the name of the switch."""
         return self._name
-
 
     @property
     def icon(self):
         """Return the icon to use in the frontend."""
         return self._icon
 
-
     @property
     def is_on(self):
         """Get the assumed state of the switch."""
         return self._state
-
 
     @property
     def state(self):
         """Return the state of the switch."""
         return self._state
 
-
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this switch."""
         return f"{self._unique_id}_{self._type}"
-
 
     @property
     def device_state_attributes(self):
@@ -124,7 +119,6 @@ class FSRSwitch(SwitchEntity):
         attr = self._state_attributes
         attr[ATTR_ATTRIBUTION] = ATTRIBUTION
         return attr
-
 
     @property
     def device_info(self) -> Dict[str, Any]:
@@ -135,42 +129,35 @@ class FSRSwitch(SwitchEntity):
             "manufacturer": "FireServiceRota",
         }
 
-
     @property
     def entity_registry_enabled_default(self) -> bool:
         """Return if the entity should be enabled when first added to the entity registry."""
         return self._enabled_default
-
 
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._available
 
-
     @property
     def device_class(self):
         """Return the device class of the device."""
         return self._device_class
 
-
     async def async_turn_on(self, **kwargs) -> None:
-        """Send Acknowlegde response."""
+        """Send Acknowlegde response status."""
         await self._data.async_set_response(self._data.incident_id, True)
         await self.async_update()
 
-
     async def async_turn_off(self, **kwargs) -> None:
-        """Send Reject response."""
+        """Send Reject response status."""
         await self._data.async_set_response(self._data.incident_id, False)
         await self.async_update()
-
 
     @property
     def should_poll(self) -> bool:
         """Polling needed."""
         return True
-
 
     async def async_added_to_hass(self):
         """Register update callback."""
@@ -180,19 +167,12 @@ class FSRSwitch(SwitchEntity):
             )
         )
 
-
     async def async_on_demand_update(self):
         """Update state."""
         self.async_schedule_update_ha_state(True)
 
-
     async def async_update(self):
-        """Update using FireServiceRota data."""
-
-        _LOGGER.debug(
-                "Incident update CALLED"
-        )
-
+        """Update FireServiceRota response data."""
         if not self.enabled:
             return
 
