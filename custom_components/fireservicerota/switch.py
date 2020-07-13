@@ -163,7 +163,8 @@ class FSRSwitch(SwitchEntity):
         """Register update callback."""
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass, SIGNAL_UPDATE_INCIDENTS, self.async_update
+                # self.hass, SIGNAL_UPDATE_INCIDENTS, self.async_update
+                self.hass, SIGNAL_UPDATE_INCIDENTS, self.async_on_demand_update
             )
         )
 
