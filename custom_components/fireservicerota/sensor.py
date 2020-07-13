@@ -11,6 +11,7 @@ from homeassistant.const import ATTR_ATTRIBUTION, CONF_URL, CONF_TOKEN
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS
 
@@ -110,7 +111,7 @@ class IncidentsDataProvider:
                 pass
 
 
-class IncidentsSensor(Entity):
+class IncidentsSensor(RestoreEntity):
     """Representation of FireServiceRota incidents sensor."""
     def __init__(
         self,
@@ -207,8 +208,15 @@ class IncidentsSensor(Entity):
         """Return the device class of the sensor."""
         return self._device_class
 
-    async def async_added_to_hass(self):
-        """Register update callback."""
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+
+        state = await self.async_get_last_state()
+        if state:
+            self._state = state.state
+            self._state_attributes = state.attributes
+
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass, SIGNAL_UPDATE_INCIDENTS, self.async_on_demand_update
