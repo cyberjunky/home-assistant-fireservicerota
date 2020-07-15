@@ -1,17 +1,22 @@
 """The FireServiceRota integration."""
 import asyncio
-import voluptuous as vol
 from datetime import timedelta
 import logging
 
-from pyfireservicerota import FireServiceRota, ExpiredTokenError, InvalidTokenError, InvalidAuthError
-from homeassistant.const import CONF_URL, CONF_TOKEN
+from pyfireservicerota import (
+    ExpiredTokenError,
+    FireServiceRota,
+    InvalidAuthError,
+    InvalidTokenError,
+)
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_TOKEN, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, PLATFORMS, NOTIFICATION_AUTH_TITLE, NOTIFICATION_AUTH_ID
+from .const import DOMAIN, NOTIFICATION_AUTH_ID, NOTIFICATION_AUTH_TITLE, PLATFORMS
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 

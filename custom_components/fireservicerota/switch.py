@@ -1,22 +1,18 @@
 """Platform for FireServiceRota integration."""
-from typing import Any, Dict
 import logging
-
-try:
-    from homeassistant.components.switch import (SwitchEntity, PLATFORM_SCHEMA)
-except ImportError:
-    from homeassistant.components.switch import (SwitchDevice as SwitchEntity, PLATFORM_SCHEMA)
+from typing import Any, Dict
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import HomeAssistantType
-from homeassistant.const import (
-    ATTR_ATTRIBUTION, 
-    STATE_OFF, 
-    STATE_ON
-)
+from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, SWITCH_ENTITY_LIST, ATTRIBUTION, SIGNAL_UPDATE_INCIDENTS
+from .const import ATTRIBUTION, DOMAIN, SIGNAL_UPDATE_INCIDENTS, SWITCH_ENTITY_LIST
+
+try:
+    from homeassistant.components.switch import SwitchEntity
+except ImportError:
+    from homeassistant.components.switch import SwitchDevice as SwitchEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +58,7 @@ async def async_setup_entry(
 
 class FSRSwitch(SwitchEntity):
     """Representation of an FireServiceRota switch."""
+
     def __init__(
         self,
         data,
@@ -180,20 +177,16 @@ class FSRSwitch(SwitchEntity):
 
         response_data = self._data.response_data
         if response_data:
-            _LOGGER.debug(
-                "Incident response status: %s", response_data['status']
-            )
+            _LOGGER.debug("Incident response status: %s", response_data["status"])
             try:
-                if response_data['status'] == 'acknowledged':
+                if response_data["status"] == "acknowledged":
                     self._state = STATE_ON
                 else:
                     self._state = STATE_OFF
 
-                del response_data['user_photo']
+                del response_data["user_photo"]
                 self._state_attributes = response_data
             except (KeyError, TypeError):
                 pass
 
-        _LOGGER.debug(
-            "Entity %s state changed to: %s", self._name, self._state
-        )
+        _LOGGER.debug("Entity %s state changed to: %s", self._name, self._state)

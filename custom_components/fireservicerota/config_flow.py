@@ -1,11 +1,11 @@
 """Config flow for FireServiceRota."""
 from pyfireservicerota import FireServiceRota, InvalidAuthError
-
 import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_TOKEN, CONF_URL
 
-from .const import DOMAIN, URL_LIST # pylint: disable=unused-import
+from homeassistant import config_entries
+from homeassistant.const import CONF_PASSWORD, CONF_TOKEN, CONF_URL, CONF_USERNAME
+
+from .const import DOMAIN, URL_LIST  # pylint: disable=unused-import
 
 
 class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -18,7 +18,9 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_USERNAME): str,
                 vol.Required(CONF_PASSWORD): str,
-                vol.Required(CONF_URL, default="www.brandweerrooster.nl"): vol.In(URL_LIST),
+                vol.Required(CONF_URL, default="www.brandweerrooster.nl"): vol.In(
+                    URL_LIST
+                ),
             }
         )
 
@@ -40,9 +42,11 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         try:
             api = FireServiceRota(
-                base_url=f"https://{user_input[CONF_URL]}", username=user_input[CONF_USERNAME], password=user_input[CONF_PASSWORD]
+                base_url=f"https://{user_input[CONF_URL]}",
+                username=user_input[CONF_USERNAME],
+                password=user_input[CONF_PASSWORD],
             )
-            token_info =  await self.hass.async_add_executor_job(api.request_tokens)
+            token_info = await self.hass.async_add_executor_job(api.request_tokens)
 
         except InvalidAuthError:
             return await self._show_form(errors={"base": "invalid_credentials"})
@@ -52,6 +56,6 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data={
                 "auth_implementation": DOMAIN,
                 CONF_URL: user_input[CONF_URL],
-                CONF_TOKEN: token_info
+                CONF_TOKEN: token_info,
             },
         )

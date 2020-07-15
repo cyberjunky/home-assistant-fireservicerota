@@ -1,16 +1,16 @@
 """Platform for FireServiceRota integration."""
-from typing import Any, Dict
 import logging
+from typing import Any, Dict
 
 from homeassistant.components.binary_sensor import (
+    DEVICE_CLASS_OCCUPANCY,
     BinarySensorEntity,
-    DEVICE_CLASS_OCCUPANCY
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
+from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, BINARY_SENSOR_ENTITY_LIST, ATTRIBUTION
+from .const import ATTRIBUTION, BINARY_SENSOR_ENTITY_LIST, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ async def async_setup_entry(
 
 class FSRBinarySensor(BinarySensorEntity):
     """Representation of an FireServiceRota sensor."""
+
     def __init__(
         self,
         data,
@@ -155,7 +156,7 @@ class FSRBinarySensor(BinarySensorEntity):
         _LOGGER.debug(self._data.availability_data)
         try:
             if self._data.availability_data:
-                state =  self._data.availability_data['available']
+                state = self._data.availability_data["available"]
                 if state:
                     self._state = STATE_ON
                 else:
@@ -164,10 +165,6 @@ class FSRBinarySensor(BinarySensorEntity):
             else:
                 self._state = STATE_OFF
         except (KeyError, TypeError) as err:
-            _LOGGER.debug(
-                "Error while updating %s device state: %s", self._name, err
-            )
+            _LOGGER.debug("Error while updating %s device state: %s", self._name, err)
 
-        _LOGGER.debug(
-            "Entity %s state changed to: %s", self._name, self._state
-        )
+        _LOGGER.debug("Entity %s state changed to: %s", self._name, self._state)

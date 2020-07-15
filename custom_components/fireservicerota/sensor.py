@@ -1,19 +1,26 @@
 """Platform for FireServiceRota integration."""
-from typing import Any, Dict
-import threading
-import json
 import logging
+import threading
+from typing import Any, Dict
 
 from pyfireservicerota import FireServiceRotaIncidents
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_URL, CONF_TOKEN
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.typing import HomeAssistantType
-from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
+from homeassistant.const import ATTR_ATTRIBUTION, CONF_TOKEN, CONF_URL
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, ATTRIBUTION, WSS_BWRURL, SENSOR_ENTITY_LIST, SIGNAL_UPDATE_INCIDENTS
+from .const import (
+    ATTRIBUTION,
+    DOMAIN,
+    SENSOR_ENTITY_LIST,
+    SIGNAL_UPDATE_INCIDENTS,
+    WSS_BWRURL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,13 +70,16 @@ async def async_setup_entry(
 
 class IncidentsDataProvider:
     """Open a websocket connection to FireServiceRota to get incidents data."""
+
     def __init__(self, hass, entry):
 
         self._hass = hass
         self._entry = entry
 
         self._token_info = self._entry.data[CONF_TOKEN]
-        self._wsurl = WSS_BWRURL.format(self._entry.data[CONF_URL], self._token_info['access_token'])
+        self._wsurl = WSS_BWRURL.format(
+            self._entry.data[CONF_URL], self._token_info["access_token"]
+        )
         self._data = None
 
         self._listener = None
@@ -104,8 +114,12 @@ class IncidentsDataProvider:
         while True:
             try:
                 _LOGGER.debug("Starting incidents listener forever")
-                self._listener = FireServiceRotaIncidents(url=self._wsurl, on_incident=self.on_incident, 
-                        on_error=self.on_error, on_close=self.on_close)
+                self._listener = FireServiceRotaIncidents(
+                    url=self._wsurl,
+                    on_incident=self.on_incident,
+                    on_error=self.on_error,
+                    on_close=self.on_close,
+                )
                 self._listener.run_forever()
             except:
                 pass
@@ -113,6 +127,7 @@ class IncidentsDataProvider:
 
 class IncidentsSensor(RestoreEntity):
     """Representation of FireServiceRota incidents sensor."""
+
     def __init__(
         self,
         data,
@@ -169,14 +184,36 @@ class IncidentsSensor(RestoreEntity):
         data = self._state_attributes
 
         if data:
-            for value in ("id", "state", "created_at", "start_time", "location", "message_to_speech_url",
-                    "prio", "type", "responder_mode", "can_respond_until"):
+            for value in (
+                "id",
+                "state",
+                "created_at",
+                "start_time",
+                "location",
+                "message_to_speech_url",
+                "prio",
+                "type",
+                "responder_mode",
+                "can_respond_until",
+            ):
                 if data.get(value):
                     attr[value] = data[value]
 
-            try: 
-                for address_value in ("address_line1", "address_line2", "street_name", "house_number", "postcode",
-                        "city", "country", "state", "latitude", "longitude", "address_type", "formatted_address"):
+            try:
+                for address_value in (
+                    "address_line1",
+                    "address_line2",
+                    "street_name",
+                    "house_number",
+                    "postcode",
+                    "city",
+                    "country",
+                    "state",
+                    "latitude",
+                    "longitude",
+                    "address_type",
+                    "formatted_address",
+                ):
                     attr[address_value] = data.get("address").get(address_value)
             except:
                 pass
@@ -243,6 +280,4 @@ class IncidentsSensor(RestoreEntity):
         except (KeyError, TypeError):
             pass
 
-        _LOGGER.debug(
-            "Entity state changed to: %s", self._state
-        )
+        _LOGGER.debug("Entity state changed to: %s", self._state)
