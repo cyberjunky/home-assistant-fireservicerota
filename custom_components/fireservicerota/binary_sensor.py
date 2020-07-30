@@ -1,11 +1,8 @@
-"""Platform for FireServiceRota integration."""
+"""Binary Sensor platform for FireServiceRota integration."""
 import logging
 from typing import Any, Dict
 
-from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_OCCUPANCY,
-    BinarySensorEntity,
-)
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
 from homeassistant.helpers.typing import HomeAssistantType
@@ -18,8 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
-    """Set up FireServiceRota binary sensors based on a config entry."""
-
+    """Set up FireServiceRota binary sensor based on a config entry."""
     data = hass.data[DOMAIN]
     unique_id = entry.unique_id
 
@@ -39,7 +35,7 @@ async def async_setup_entry(
             enabled_by_default,
         )
         entities.append(
-            FSRBinarySensor(
+            ResponseBinarySensor(
                 data,
                 unique_id,
                 sensor_type,
@@ -54,7 +50,7 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class FSRBinarySensor(BinarySensorEntity):
+class ResponseBinarySensor(BinarySensorEntity):
     """Representation of an FireServiceRota sensor."""
 
     def __init__(
@@ -140,7 +136,7 @@ class FSRBinarySensor(BinarySensorEntity):
 
     @property
     def should_poll(self) -> bool:
-        """Polling needed."""
+        """Enable Polling for this binary sensor."""
         return True
 
     async def async_on_demand_update(self):

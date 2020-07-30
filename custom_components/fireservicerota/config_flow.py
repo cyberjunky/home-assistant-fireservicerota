@@ -13,7 +13,6 @@ class FireServiceRotaFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         """Initialize the config flow."""
-
         self.data_schema = vol.Schema(
             {
                 vol.Required(CONF_USERNAME): str,

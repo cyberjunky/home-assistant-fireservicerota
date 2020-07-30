@@ -1,4 +1,4 @@
-"""Platform for FireServiceRota integration."""
+"""Sensor platform for FireServiceRota integration."""
 import logging
 import threading
 from typing import Any, Dict
@@ -29,12 +29,7 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota sensor based on a config entry."""
-    try:
-        incidents_data = IncidentsDataProvider(hass, entry)
-    except Exception:
-        _LOGGER.error("Error while starting incidents listener")
-        return False
-
+    incidents_data = IncidentsDataProvider(hass, entry)
     unique_id = entry.unique_id
 
     entities = []
@@ -72,7 +67,7 @@ class IncidentsDataProvider:
     """Open a websocket connection to FireServiceRota to get incidents data."""
 
     def __init__(self, hass, entry):
-
+        """Initialize the data object."""
         self._hass = hass
         self._entry = entry
 
@@ -93,7 +88,6 @@ class IncidentsDataProvider:
         self._data = data
         self._hass.data[DOMAIN].set_incident_data(data)
 
-        """Signal hass to update sensor value."""
         async_dispatcher_send(self._hass, SIGNAL_UPDATE_INCIDENTS)
 
     @property
@@ -101,27 +95,22 @@ class IncidentsDataProvider:
         """Return the current data."""
         return self._data
 
-    def on_error(self, error):
-        _LOGGER.debug("Websocket error: %s", error)
-
     def on_close(self):
+        """Log websocket close and restart listener."""
         _LOGGER.debug("Websocket closed")
-        return
 
     def incidents_listener(self):
-        """Spawn a new Listener and link it to self.on_incident."""
-
+        """(re)start a websocket listener."""
         while True:
             try:
                 _LOGGER.debug("Starting incidents listener forever")
                 self._listener = FireServiceRotaIncidents(
                     url=self._wsurl,
                     on_incident=self.on_incident,
-                    on_error=self.on_error,
                     on_close=self.on_close,
                 )
                 self._listener.run_forever()
-            except:
+            except ConnectionAbortedError:
                 pass
 
 
@@ -186,6 +175,7 @@ class IncidentsSensor(RestoreEntity):
         if data:
             for value in (
                 "id",
+                "trigger",
                 "state",
                 "created_at",
                 "start_time",
@@ -215,7 +205,7 @@ class IncidentsSensor(RestoreEntity):
                     "formatted_address",
                 ):
                     attr[address_value] = data.get("address").get(address_value)
-            except:
+            except (KeyError, AttributeError):
                 pass
 
             attr[ATTR_ATTRIBUTION] = ATTRIBUTION

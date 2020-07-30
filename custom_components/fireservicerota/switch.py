@@ -1,18 +1,14 @@
-"""Platform for FireServiceRota integration."""
+"""Switch platform for FireServiceRota integration."""
 import logging
 from typing import Any, Dict
 
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import ATTRIBUTION, DOMAIN, SIGNAL_UPDATE_INCIDENTS, SWITCH_ENTITY_LIST
-
-try:
-    from homeassistant.components.switch import SwitchEntity
-except ImportError:
-    from homeassistant.components.switch import SwitchDevice as SwitchEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +17,6 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota switch based on a config entry."""
-
     data = hass.data[DOMAIN]
     unique_id = entry.unique_id
 
@@ -41,7 +36,7 @@ async def async_setup_entry(
             enabled_by_default,
         )
         entities.append(
-            FSRSwitch(
+            ResponseSwitch(
                 data,
                 unique_id,
                 sensor_type,
@@ -56,7 +51,7 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class FSRSwitch(SwitchEntity):
+class ResponseSwitch(SwitchEntity):
     """Representation of an FireServiceRota switch."""
 
     def __init__(
@@ -153,7 +148,7 @@ class FSRSwitch(SwitchEntity):
 
     @property
     def should_poll(self) -> bool:
-        """Polling needed."""
+        """Enable Polling for this switch."""
         return True
 
     async def async_added_to_hass(self):
