@@ -1,13 +1,15 @@
 """Binary Sensor platform for FireServiceRota integration."""
 import logging
-from typing import Any, Dict
-
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, STATE_OFF, STATE_ON
-from homeassistant.helpers.typing import HomeAssistantType
+from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    CoordinatorEntity,
+)
 
-from .const import ATTRIBUTION, BINARY_SENSOR_ENTITY_LIST, DOMAIN
+from homeassistant.helpers.typing import HomeAssistantType
+from .const import DOMAIN as FIRESERVICEROTA_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,151 +18,85 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota binary sensor based on a config entry."""
-    data = hass.data[DOMAIN]
-    unique_id = entry.unique_id
+    coordinator = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id]
 
-    entities = []
-    for (
-        sensor_type,
-        (name, unit, icon, device_class, enabled_by_default),
-    ) in BINARY_SENSOR_ENTITY_LIST.items():
-
-        _LOGGER.debug(
-            "Registering entity: %s, %s, %s, %s, %s, %s",
-            sensor_type,
-            name,
-            unit,
-            icon,
-            device_class,
-            enabled_by_default,
-        )
-        entities.append(
-            ResponseBinarySensor(
-                data,
-                unique_id,
-                sensor_type,
-                name,
-                unit,
-                icon,
-                device_class,
-                enabled_by_default,
-            )
-        )
-
-    async_add_entities(entities, True)
+    async_add_entities([ResponseBinarySensor(coordinator, entry)], True)
 
 
-class ResponseBinarySensor(BinarySensorEntity):
+class ResponseBinarySensor(BinarySensorEntity, CoordinatorEntity):
     """Representation of an FireServiceRota sensor."""
 
-    def __init__(
-        self,
-        data,
-        unique_id,
-        sensor_type,
-        name,
-        unit,
-        icon,
-        device_class,
-        enabled_default: bool = True,
-    ):
+    def __init__(self, coordinator: DataUpdateCoordinator, entry):
         """Initialize."""
-        self._data = data
-        self._unique_id = unique_id
-        self._type = sensor_type
-        self._name = name
-        self._unit = unit
-        self._icon = icon
-        self._device_class = device_class
-        self._enabled_default = enabled_default
-        self._available = True
+        self._coordinator = coordinator
+        super().__init__(coordinator)
+        self._unique_id = entry.unique_id
+
         self._state = None
-        self._state_attributes = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor."""
-        return self._name
+        return "Duty"
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         """Return the icon to use in the frontend."""
-        return self._icon
-
-    @property
-    def state(self):
-        """Return the state of the binary sensor."""
-        return self._state
+        return "mdi:calendar"
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this binary sensor."""
-        return f"{self._unique_id}_{self._type}"
+        return f"{self._unique_id}_Duty"
 
     @property
-    def device_state_attributes(self):
-        """Return available attributes for binary sensor."""
-        attr = {}
-        attr = self._state_attributes
-        attr[ATTR_ATTRIBUTION] = ATTRIBUTION
-        return attr
-
-    @property
-    def device_info(self) -> Dict[str, Any]:
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, self._unique_id)},
-            "name": f"{self._name} Binary Sensor",
-            "manufacturer": "FireServiceRota",
-        }
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        """Return if the entity should be enabled when first added to the entity registry."""
-        return self._enabled_default
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return self._available
-
-    @property
-    def device_class(self):
-        """Return the device class of the binary sensor."""
-        return self._device_class
-
-    @property
-    def is_on(self):
+    def is_on(self) -> str:
         """Return the status of the binary sensor."""
         return self._state
 
     @property
     def should_poll(self) -> bool:
-        """Enable Polling for this binary sensor."""
-        return True
+        """No polling needed."""
+        return False
 
-    async def async_on_demand_update(self):
-        """Update state."""
-        self.async_schedule_update_ha_state(True)
-
-    async def async_update(self):
-        """Update using FireServiceRota data."""
-        if not self.enabled:
+    @property
+    def state(self) -> str:
+        """Return the state of the binary sensor."""
+        if not self._coordinator.data:
             return
 
-        await self._data.async_update()
-        _LOGGER.debug(self._data.availability_data)
-        try:
-            if self._data.availability_data:
-                state = self._data.availability_data["available"]
-                if state:
-                    self._state = STATE_ON
-                else:
-                    self._state = STATE_OFF
-                self._state_attributes = self._data.availability_data
+        availability_data = self._coordinator.data
+        if "available" in availability_data:
+            state = availability_data["available"]
+            if state:
+                self._state = STATE_ON
             else:
                 self._state = STATE_OFF
-        except (KeyError, TypeError) as err:
-            _LOGGER.debug("Error while updating %s device state: %s", self._name, err)
+        else:
+            self._state = STATE_OFF
 
-        _LOGGER.debug("Entity %s state changed to: %s", self._name, self._state)
+        _LOGGER.debug("Set state of entity 'Duty Binary Sensor' to '%s'", self._state)
+        return self._state
+
+    @property
+    def device_state_attributes(self):
+        """Return available attributes for binary sensor."""
+        attr = {}
+        if not self._coordinator.data:
+            return attr
+
+        data = self._coordinator.data
+        for value in (
+            "start_time",
+            "end_time",
+            "available",
+            "active",
+            "assigned_function_ids",
+            "skill_ids",
+            "type",
+            "assigned_function",
+        ):
+            if data.get(value):
+                attr[value] = data[value]
+
+        return attr
