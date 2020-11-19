@@ -2,6 +2,7 @@
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import HomeAssistantType
@@ -54,7 +55,7 @@ class IncidentsSensor(RestoreEntity):
 
     @property
     def unique_id(self) -> str:
-        """Return the unique ID for this sensor."""
+        """Return the unique ID of the sensor."""
         return self._unique_id
 
     @property
@@ -98,7 +99,7 @@ class IncidentsSensor(RestoreEntity):
         return attr
 
     async def async_added_to_hass(self) -> None:
-        """Handle entity which will be added."""
+        """Run when about to be added to hass."""
         await super().async_added_to_hass()
 
         state = await self.async_get_last_state()
@@ -115,17 +116,13 @@ class IncidentsSensor(RestoreEntity):
             )
         )
 
-    async def coordinator_update(self) -> None:
+    @callback
+    def coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self.async_schedule_update_ha_state(force_refresh=True)
-
-    async def async_update(self) -> None:
-        """Update using FireServiceRota data."""
-        if not self._coordinator.incident_data:
+        data = self._coordinator.websocket.incident_data()
+        if not data or "body" not in data:
             return
 
-        if "body" in self._coordinator.incident_data:
-            self._state = self._coordinator.incident_data["body"]
-            self._state_attributes = self._coordinator.incident_data
-
-            _LOGGER.debug("Entity 'Incidents' state set to: %s", self._state)
+        self._state = data["body"]
+        self._state_attributes = data
+        self.async_write_ha_state()

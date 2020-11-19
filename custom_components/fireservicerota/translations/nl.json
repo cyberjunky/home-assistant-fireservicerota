@@ -1,21 +1,26 @@
 {
     "config": {
-        "title": "FireServiceRota",
-        "description": "Voer uw login gegevens in",
         "step": {
             "user": {
                 "title": "FireServiceRota",
                 "data": { "username": "Gebruikersnaam", "password": "Wachtwoord", "url": "Website"}
+            },
+            "reauth": {
+                "description": "Authenticatietokens zijn ongeldig, login om ze te creëren.",
+                "data": {
+                    "password": "Password"
+                }
             }
         },
         "error": {
-            "invalid_credentials": "Ongeldige authenticatie."
+            "invalid_credentials": "Ongeldige authenticatie"
         },
         "abort": {
-            "already_configured": "Dit account is al geconfigureerd."
+            "already_configured": "Dit account is al geconfigureerd",
+            "reauth_successful": "Re-authenticatie was succesvol"
         },
         "create_entry": {
-            "default": "Succesvol aangemeld!"
+            "default": "Succesvol aangemeld"
         }
     }
 }
