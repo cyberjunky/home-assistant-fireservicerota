@@ -1,15 +1,15 @@
 """Binary Sensor platform for FireServiceRota integration."""
 import logging
+
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
     CoordinatorEntity,
+    DataUpdateCoordinator,
 )
 
-from homeassistant.helpers.typing import HomeAssistantType
-from .const import DOMAIN as FIRESERVICEROTA_DOMAIN
+from .const import DATA_CLIENT, DATA_COORDINATOR, DOMAIN as FIRESERVICEROTA_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,19 +18,24 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota binary sensor based on a config entry."""
-    coordinator = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id]
 
-    async_add_entities([ResponseBinarySensor(coordinator, entry)], True)
+    client = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id][DATA_CLIENT]
+
+    coordinator: DataUpdateCoordinator = hass.data[FIRESERVICEROTA_DOMAIN][
+        entry.entry_id
+    ][DATA_COORDINATOR]
+
+    async_add_entities([ResponseBinarySensor(coordinator, client, entry)])
 
 
-class ResponseBinarySensor(BinarySensorEntity, CoordinatorEntity):
+class ResponseBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Representation of an FireServiceRota sensor."""
 
-    def __init__(self, coordinator: DataUpdateCoordinator, entry):
+    def __init__(self, coordinator: DataUpdateCoordinator, client, entry):
         """Initialize."""
-        self._coordinator = coordinator
         super().__init__(coordinator)
-        self._unique_id = entry.unique_id
+        self._client = client
+        self._unique_id = f"{entry.unique_id}_Duty"
 
         self._state = None
 
@@ -42,61 +47,45 @@ class ResponseBinarySensor(BinarySensorEntity, CoordinatorEntity):
     @property
     def icon(self) -> str:
         """Return the icon to use in the frontend."""
-        return "mdi:calendar"
+        if self._state:
+            return "mdi:calendar-check"
+
+        return "mdi:calendar-remove"
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this binary sensor."""
-        return f"{self._unique_id}_Duty"
+        return self._unique_id
 
     @property
-    def is_on(self) -> str:
-        """Return the status of the binary sensor."""
-        return self._state
-
-    @property
-    def should_poll(self) -> bool:
-        """No polling needed."""
-        return False
-
-    @property
-    def state(self) -> str:
+    def is_on(self) -> bool:
         """Return the state of the binary sensor."""
-        if not self._coordinator.data:
-            return
 
-        availability_data = self._coordinator.data
-        if "available" in availability_data:
-            state = availability_data["available"]
-            if state:
-                self._state = STATE_ON
-            else:
-                self._state = STATE_OFF
-        else:
-            self._state = STATE_OFF
+        self._state = self._client.on_duty
 
-        _LOGGER.debug("Set state of entity 'Duty Binary Sensor' to '%s'", self._state)
         return self._state
 
     @property
     def device_state_attributes(self):
         """Return available attributes for binary sensor."""
         attr = {}
-        if not self._coordinator.data:
+        if not self.coordinator.data:
             return attr
 
-        data = self._coordinator.data
-        for value in (
-            "start_time",
-            "end_time",
-            "available",
-            "active",
-            "assigned_function_ids",
-            "skill_ids",
-            "type",
-            "assigned_function",
-        ):
-            if data.get(value):
-                attr[value] = data[value]
+        data = self.coordinator.data
+        attr = {
+            key: data[key]
+            for key in (
+                "start_time",
+                "end_time",
+                "available",
+                "active",
+                "assigned_function_ids",
+                "skill_ids",
+                "type",
+                "assigned_function",
+            )
+            if key in data
+        }
 
         return attr

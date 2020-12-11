@@ -3,11 +3,11 @@ import logging
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN as FIRESERVICEROTA_DOMAIN
+from .const import DATA_CLIENT, DATA_COORDINATOR, DOMAIN as FIRESERVICEROTA_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,22 +16,26 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up FireServiceRota switch based on a config entry."""
-    coordinator = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id]
+    client = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id][DATA_CLIENT]
 
-    async_add_entities([ResponseSwitch(coordinator, entry)])
+    coordinator = hass.data[FIRESERVICEROTA_DOMAIN][entry.entry_id][DATA_COORDINATOR]
+
+    async_add_entities([ResponseSwitch(coordinator, client, entry)])
 
 
 class ResponseSwitch(SwitchEntity):
     """Representation of an FireServiceRota switch."""
 
-    def __init__(self, coordinator, entry):
+    def __init__(self, coordinator, client, entry):
         """Initialize."""
         self._coordinator = coordinator
-        self._unique_id = entry.unique_id
+        self._client = client
+        self._unique_id = f"{entry.unique_id}_Response"
         self._entry_id = entry.entry_id
 
         self._state = None
         self._state_attributes = {}
+        self._state_icon = None
 
     @property
     def name(self) -> str:
@@ -41,22 +45,22 @@ class ResponseSwitch(SwitchEntity):
     @property
     def icon(self) -> str:
         """Return the icon to use in the frontend."""
+        if self._state_icon == "acknowledged":
+            return "mdi:run-fast"
+        if self._state_icon == "rejected":
+            return "mdi:account-off-outline"
+
         return "mdi:forum"
 
     @property
-    def is_on(self) -> str:
+    def is_on(self) -> bool:
         """Get the assumed state of the switch."""
-        return self._state
-
-    @property
-    def state(self) -> str:
-        """Return the state of the switch."""
         return self._state
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this switch."""
-        return f"{self._unique_id}_Response"
+        return self._unique_id
 
     @property
     def should_poll(self) -> bool:
@@ -64,13 +68,21 @@ class ResponseSwitch(SwitchEntity):
         return False
 
     @property
+    def available(self):
+        """Return if switch is available."""
+        return self._client.on_duty
+
+    @property
     def device_state_attributes(self) -> object:
         """Return available attributes for switch."""
         attr = {}
-        data = self._state_attributes
+        if not self._state_attributes:
+            return attr
 
-        if data:
-            for value in (
+        data = self._state_attributes
+        attr = {
+            key: data[key]
+            for key in (
                 "user_name",
                 "assigned_skill_ids",
                 "responded_at",
@@ -80,21 +92,30 @@ class ResponseSwitch(SwitchEntity):
                 "arrived_at_station",
                 "available_at_incident_creation",
                 "active_duty_function_ids",
-            ):
-                if data.get(value):
-                    attr[value] = data[value]
+            )
+            if key in data
+        }
 
         return attr
 
     async def async_turn_on(self, **kwargs) -> None:
         """Send Acknowlegde response status."""
-        await self._coordinator.async_set_response(True)
-        await self.async_update()
+        await self.async_set_response(True)
 
     async def async_turn_off(self, **kwargs) -> None:
         """Send Reject response status."""
-        await self._coordinator.async_set_response(False)
-        await self.async_update()
+        await self.async_set_response(False)
+
+    async def async_set_response(self, value) -> None:
+        """Send response status."""
+        if not self._client.on_duty:
+            _LOGGER.debug(
+                "Cannot send incident response when not on duty",
+            )
+            return
+
+        await self._client.async_set_response(value)
+        self.client_update()
 
     async def async_added_to_hass(self) -> None:
         """Register update callback."""
@@ -102,28 +123,27 @@ class ResponseSwitch(SwitchEntity):
             async_dispatcher_connect(
                 self.hass,
                 f"{FIRESERVICEROTA_DOMAIN}_{self._entry_id}_update",
-                self.coordinator_update,
+                self.client_update,
             )
         )
+        self.async_on_remove(
+            self._coordinator.async_add_listener(self.async_write_ha_state)
+        )
 
-    async def coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.async_schedule_update_ha_state(force_refresh=True)
+    @callback
+    def client_update(self) -> None:
+        """Handle updated incident data from the client."""
+        self.async_schedule_update_ha_state(True)
 
-    async def async_update(self) -> None:
+    async def async_update(self) -> bool:
         """Update FireServiceRota response data."""
-        response_data = await self._coordinator.async_response_update()
+        data = await self._client.async_response_update()
 
-        if not response_data:
+        if not data or "status" not in data:
             return
 
-        if "status" in response_data:
-            if response_data["status"] == "acknowledged":
-                self._state = STATE_ON
-            else:
-                self._state = STATE_OFF
+        self._state = data["status"] == "acknowledged"
+        self._state_attributes = data
+        self._state_icon = data["status"]
 
-            del response_data["user_photo"]
-            self._state_attributes = response_data
-
-            _LOGGER.debug("Set state of entity 'Response Switch' to '%s'", self._state)
+        _LOGGER.debug("Set state of entity 'Response Switch' to '%s'", self._state)
