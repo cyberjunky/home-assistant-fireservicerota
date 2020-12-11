@@ -201,7 +201,7 @@ views:
     type: horizontal-stack
 ```
 
-With custom components and frontend items:
+## Other examples with custom components and frontend items:
 
 If you want to have your browser to function as audio player, and have screen control you need to install the 'browser_mod' integration (via HACS)
 
