@@ -2,7 +2,7 @@
 
 # FireServiceRota / BrandweerRooster integration
 
-NOTE: This code will be released in Home Assistant 1.0, you can try the beta version, or install it via the steps below.
+NOTE: This code will is released as part of https://www.home-assistant.io/integrations/#version/2020.12 I suggest to upgrade you Home Assistant version to use this integration.
 
 FireServiceRota is a powerful and flexible availability, scheduling and dispatching system for firefighters.
 It's the international brand of the Dutch [BrandweerRooster](https://www.brandweerrooster.nl), which is in use by more than 200 fire stations in The Netherlands.
