@@ -17,11 +17,23 @@ blueprint:
         target:
           entity:
             domain: light
+    light_off_delay:
+      name: Delay Light Off
+      description: Time to leave the light on.
+      default: 180
+      selector:
+        number:
+          min: 5
+          max: 3600
+          unit_of_measurement: seconds
 
 trigger:
   platform: state
   entity_id: !input incident_sensor
 
 action:
-  service: light.turn_on
-  target: !input target_light
+  - service: light.turn_on
+    target: !input target_light
+  - delay: !input light_off_delay
+  - service: light.turn_off
+    target: !input target_light
