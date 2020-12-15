@@ -1,0 +1,27 @@
+blueprint:
+  name: FireServiceRota Lights
+  description: Turn a light at incident call
+  domain: automation
+  input:
+    incident_sensor:
+      name: Incident Sensor
+      default: sensor.incidents
+      description: The standard incident sensor added by FireServiceRota. Please select the correct one if you changed the entity name of the sensor.
+      selector:
+        entity:
+          domain: sensor
+    target_light:
+      name: Lights
+      description: The lights to swtich on.
+      selector:
+        target:
+          entity:
+            domain: light
+
+trigger:
+  platform: state
+  entity_id: !input incident_sensor
+
+action:
+  service: light.turn_on
+  target: !input target_light
