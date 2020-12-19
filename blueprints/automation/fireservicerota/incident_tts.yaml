@@ -1,0 +1,54 @@
+blueprint:
+  name: FireServiceRota Text to Speech
+  description: Broadcast Incident TTS at incident call
+  domain: automation
+  input:
+    incident_sensor:
+      name: Incident Sensor
+      default: sensor.incidents
+      description: The standard incident sensor added by FireServiceRota. Please select the correct one if you changed the entity name of the sensor.
+      selector:
+        entity:
+          domain: sensor
+    target_media_player:
+      name: Media Player
+      description: The Media Player for broadcast.
+      selector:
+        target:
+          entity:
+            domain: media_player
+    target_media_player_volume:
+      name: Media Player Volume
+      description: Volume for broadcast.
+      default: '30'
+      selector:
+        number:
+          min: '10'
+          max: '100'
+          unit_of_measurement: percent
+
+trigger:
+  platform: state
+  entity_id: !input incident_sensor
+  attribute: message_to_speech_url
+
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: sensor.incidents
+        attribute: message_to_speech_url
+        state: None
+
+action:
+  - service: media_player.volume_set
+    data_template: 
+      entity_id: !input target_media_player
+      volume_level: >
+          {{ is_state('!input target_media_player_volume') / 100 }}
+  - service: media_player.play_media
+    data_template:
+      entity_id: !input target_media_player
+      media_content_id: >
+          {{ state_attr('!input incident_sensor','message_to_speech_url') }}
+      media_content_type: 'audio/mp4'
