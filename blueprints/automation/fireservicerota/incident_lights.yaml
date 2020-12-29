@@ -26,6 +26,7 @@ blueprint:
           min: 5
           max: 3600
           unit_of_measurement: seconds
+  source_url: https://raw.githubusercontent.com/cyberjunky/home-assistant-fireservicerota/master/blueprints/automation/fireservicerota/incident_lights.yaml
 
 trigger:
   platform: state
