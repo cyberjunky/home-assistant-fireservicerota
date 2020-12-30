@@ -9,6 +9,7 @@ blueprint:
       description: The standard incident sensor added by FireServiceRota. Please select the correct one if you changed the entity name of the sensor.
       selector:
         entity:
+          integration: fireservicerota
           domain: sensor
     target_light:
       name: Lights
