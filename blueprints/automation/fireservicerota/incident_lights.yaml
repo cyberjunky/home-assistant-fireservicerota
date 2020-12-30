@@ -1,6 +1,6 @@
 blueprint:
   name: FireServiceRota Lights
-  description: Turn a light at incident call
+  description: Turn on a light at incident call
   domain: automation
   input:
     incident_sensor:
@@ -12,7 +12,7 @@ blueprint:
           domain: sensor
     target_light:
       name: Lights
-      description: The lights to swtich on.
+      description: The lights to switch on.
       selector:
         target:
           entity:
