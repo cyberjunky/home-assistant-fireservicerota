@@ -4,12 +4,13 @@ blueprint:
   description: Broadcast Incident TTS at incident call
   domain: automation
   input:
-    incident_sensor:
-      name: Incident Sensor
-      default: sensor.incidents
+    incidents_sensor:
+      name: Incidents Sensor
+      default: 'sensor.incidents'
       description: The standard incident sensor added by FireServiceRota. Please select the correct one if you changed the entity name of the sensor.
       selector:
         entity:
+          integration: fireservicerota
           domain: sensor
     target_media_player:
       name: Media Player
@@ -21,35 +22,35 @@ blueprint:
     target_media_player_volume:
       name: Media Player Volume
       description: Volume for broadcast.
-      default: '30'
+      default: '0.3'
       selector:
         number:
-          min: '10'
-          max: '100'
-          unit_of_measurement: percent
+          min: '0.1'
+          max: '1.0'
+          step: '0.1'
 
 trigger:
   platform: state
-  entity_id: !input incident_sensor
-  attribute: message_to_speech_url
+  entity_id: !input incidents_sensor
 
 condition:
   - condition: not
     conditions:
       - condition: state
-        entity_id: sensor.incidents
+        entity_id: !input incidents_sensor
         attribute: message_to_speech_url
         state: None
 
 action:
+  - variables:
+      var_incidents_sensor: !input incidents_sensor
   - service: media_player.volume_set
-    data_template: 
-      entity_id: !input target_media_player
-      volume_level: >
-          {{ is_state('!input target_media_player_volume') / 100 }}
+    target: !input 'target_media_player'
+    data:
+      volume_level: !input 'target_media_player_volume'
   - service: media_player.play_media
+    target: !input target_media_player
     data_template:
-      entity_id: !input target_media_player
       media_content_id: >
-          {{ state_attr('!input incident_sensor','message_to_speech_url') }}
+          {{ state_attr(var_incidents_sensor,message_to_speech_url) }}
       media_content_type: 'audio/mp4'
