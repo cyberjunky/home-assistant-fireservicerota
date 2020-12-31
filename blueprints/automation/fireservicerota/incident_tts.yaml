@@ -12,6 +12,14 @@ blueprint:
         entity:
           integration: fireservicerota
           domain: sensor
+    duty_binary_sensor:
+      name: Duty
+      default: binary_sensor.duty
+      description: Please choose your duty sensor if you changed the entity name
+      selector:
+        entity:
+          integration: fireservicerota
+          domain: binary_sensor
     target_media_player:
       name: Media Player
       description: The Media Player for broadcast.
@@ -40,6 +48,9 @@ condition:
         entity_id: !input incidents_sensor
         attribute: message_to_speech_url
         state: None
+  - condition: state
+    entity_id: !input duty_binary_sensor
+    state: 'on'
 
 action:
   - variables:
