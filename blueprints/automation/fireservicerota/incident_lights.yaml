@@ -11,6 +11,14 @@ blueprint:
         entity:
           integration: fireservicerota
           domain: sensor
+    duty_binary_sensor:
+      name: Duty
+      default: binary_sensor.duty
+      description: Please choose your duty sensor if you changed the entity name
+      selector:
+        entity:
+          integration: fireservicerota
+          domain: binary_sensor
     target_light:
       name: Lights
       description: The lights to switch on.
@@ -32,6 +40,11 @@ blueprint:
 trigger:
   platform: state
   entity_id: !input incident_sensor
+
+condition:
+  - condition: state
+    entity_id: !input duty_binary_sensor
+    state: 'on'
 
 action:
   - service: light.turn_on
