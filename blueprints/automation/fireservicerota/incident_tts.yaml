@@ -63,5 +63,5 @@ action:
     target: !input target_media_player
     data_template:
       media_content_id: >
-          {{ state_attr(var_incidents_sensor,message_to_speech_url) }}
+          {{ state_attr(var_incidents_sensor,'message_to_speech_url') }}
       media_content_type: 'audio/mp4'
