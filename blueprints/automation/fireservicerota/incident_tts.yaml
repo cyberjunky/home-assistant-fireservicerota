@@ -20,6 +20,19 @@ blueprint:
         entity:
           integration: fireservicerota
           domain: binary_sensor
+    person_at_home:
+      name: User
+      default: person.me
+      description: Select the person, automation will only work if person is home.
+      selector:
+        entity:
+          domain: person
+    active_zone:
+      name: Zone
+      description: If the user is in this zone the automation will run.
+      selector:
+        entity:
+          domain: zone
     target_media_player:
       name: Media Player
       description: The Media Player for broadcast.
@@ -51,6 +64,9 @@ condition:
   - condition: state
     entity_id: !input duty_binary_sensor
     state: 'on'
+  - condition: zone
+    entity_id: !input person_at_home
+    zone: !input active_zone
 
 action:
   - variables:
