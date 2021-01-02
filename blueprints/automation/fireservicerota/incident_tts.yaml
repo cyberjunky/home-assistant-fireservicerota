@@ -29,6 +29,7 @@ blueprint:
           domain: person
     active_zone:
       name: Zone
+      default: zone.home
       description: If the user is in this zone the automation will run.
       selector:
         entity:
