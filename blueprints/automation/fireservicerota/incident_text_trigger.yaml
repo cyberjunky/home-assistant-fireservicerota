@@ -41,6 +41,7 @@ blueprint:
       default: "Enter text here"
       selector:
         text:
+  source_url: https://raw.githubusercontent.com/cyberjunky/home-assistant-fireservicerota/master/blueprints/automation/fireservicerota/incident_text_trigger.yaml
 
 trigger:
   variable:
