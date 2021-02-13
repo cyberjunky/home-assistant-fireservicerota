@@ -1,0 +1,67 @@
+blueprint:
+  name: FireServiceRota Lights
+  description: Turn on a light at incident call
+  domain: automation
+  input:
+    incident_sensor:
+      name: Incident Sensor
+      default: sensor.incidents
+      description: The standard incident sensor added by FireServiceRota. Please select the correct one if you changed the entity name of the sensor.
+      selector:
+        entity:
+          integration: fireservicerota
+          domain: sensor
+    duty_binary_sensor:
+      name: Duty
+      default: binary_sensor.duty
+      description: Please choose your duty sensor if you changed the entity name
+      selector:
+        entity:
+          integration: fireservicerota
+          domain: binary_sensor
+    target_light:
+      name: Lights
+      description: The lights to switch on.
+      selector:
+        target:
+          entity:
+            domain: light
+    light_off_delay:
+      name: Delay Light Off
+      description: Time to leave the light on.
+      default: 180
+      selector:
+        number:
+          min: 5
+          max: 3600
+          unit_of_measurement: seconds
+    active_string:
+      name: Text for Activation
+      description: Only trigger if incident contains the following text
+      default: "Engine name"
+      selector:
+        text:
+
+trigger:
+  variable:
+    - var_active_string: !input active_string
+    - var_incident_sensor: !input incident_sensor
+    - regex_addon: "+"
+  platform: template
+  value_template: "{{states(var_incident_sensor) |{{var_active_string}}{{regex_addon}}, ignorecase=False)}}"
+
+trigger:
+  platform: state
+  entity_id: !input incident_sensor
+
+condition:
+  - condition: state
+    entity_id: !input duty_binary_sensor
+    state: 'on'
+
+action:
+  - service: light.turn_on
+    target: !input target_light
+  - delay: !input light_off_delay
+  - service: light.turn_off
+    target: !input target_light
