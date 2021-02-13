@@ -1,6 +1,6 @@
 blueprint:
-  name: FireServiceRota Lights
-  description: Turn on a light at incident call
+  name: FireServiceRota Lights on Text Trigger
+  description: Turn on a light at incident call containing a specific piece of text
   domain: automation
   input:
     incident_sensor:
@@ -38,7 +38,7 @@ blueprint:
     active_string:
       name: Text for Activation
       description: Only trigger if incident contains the following text
-      default: "Engine name"
+      default: "Enter text here"
       selector:
         text:
 
