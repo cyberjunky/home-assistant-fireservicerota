@@ -38,7 +38,7 @@ blueprint:
     active_string:
       name: Text for Activation
       description: Only trigger if incident contains the following text
-      default: "Enter text here"
+      default: "Replace this text"
       selector:
         text:
   source_url: https://raw.githubusercontent.com/cyberjunky/home-assistant-fireservicerota/master/blueprints/automation/fireservicerota/incident_text_trigger.yaml
@@ -50,10 +50,6 @@ trigger:
     - regex_addon: "+"
   platform: template
   value_template: "{{states(var_incident_sensor) |{{var_active_string}}{{regex_addon}}, ignorecase=False)}}"
-
-trigger:
-  platform: state
-  entity_id: !input incident_sensor
 
 condition:
   - condition: state
