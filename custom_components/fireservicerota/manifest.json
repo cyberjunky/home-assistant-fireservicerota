@@ -5,6 +5,6 @@
   "version": "1.0.0",
   "documentation": "https://www.home-assistant.io/integrations/fireservicerota",
   "issue_tracker": "https://www.home-assistant.io/integrations/fireservicerota/issues",
-  "requirements": ["pyfireservicerota==0.0.40"],
+  "requirements": ["pyfireservicerota==0.0.41"],
   "codeowners": ["@cyberjunky"]
 }
